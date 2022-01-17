@@ -1,8 +1,126 @@
 import 'package:flutter/material.dart';
 import 'package:sqlite_implementation/constants.dart';
+import 'package:sqlite_implementation/sql_helper.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // All kelas
+  List<Map<String, dynamic>> _classes = [];
+
+  bool _isLoading = true;
+
+  // This function is used to fetch all data from database
+  void _refreshClasses() async {
+    final data = await SQLHelper.getClasses();
+    setState(() {
+      _classes = data;
+      _isLoading = false;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshClasses(); //Load the diary when the app start
+  }
+
+  final TextEditingController _namaKelasController = TextEditingController();
+  final TextEditingController _tahunAjaranController = TextEditingController();
+  final TextEditingController _jumlahSiswaController = TextEditingController();
+
+  // This function will be triggered when the floating action button is pressed
+  // Also when we want to update a kelas
+  void _showForm(int? id) async {
+    if (id != null) {
+      final existingKelas =
+          _classes.firstWhere((element) => element['id'] == id);
+      _namaKelasController.text = existingKelas['nama_kelas'];
+      _tahunAjaranController.text = existingKelas['tahun_ajaran'];
+      _jumlahSiswaController.text = existingKelas['jumlah_siswa'];
+    }
+
+    showModalBottomSheet(
+      context: context,
+      elevation: 5,
+      isScrollControlled: true,
+      builder: (_) => Container(
+        padding: EdgeInsets.only(
+          top: 15,
+          left: 15,
+          right: 15,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 120,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            TextField(
+              controller: _namaKelasController,
+              decoration: const InputDecoration(hintText: 'Nama kelas'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _tahunAjaranController,
+              decoration: const InputDecoration(hintText: 'Tahun ajaran'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _jumlahSiswaController,
+              decoration: const InputDecoration(hintText: 'Jumlah siswa'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () async {
+                // Save new kelas
+                if (id == null) {
+                  await _addKelas();
+                }
+                if (id != null) {
+                  await _updateClass(id);
+                }
+              },
+              child: Text(id == null ? 'Tambahkan' : 'Update'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Insert new kelas to the database
+  Future<void> _addKelas() async {
+    await SQLHelper.createClass(
+      _namaKelasController.text,
+      _tahunAjaranController.text,
+      int.parse(_jumlahSiswaController.text),
+    );
+    _refreshClasses();
+  }
+
+  // Update an existing kelas
+  Future<void> _updateClass(int id) async {
+    await SQLHelper.updateClass(
+      id,
+      _namaKelasController.text,
+      _tahunAjaranController.text,
+      int.parse(_jumlahSiswaController.text),
+    );
+    _refreshClasses();
+  }
+
+  // Delete a kelas
+  void _deleteItem(int id) async {
+    await SQLHelper.deleteClass(id);
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Kelas berhasil dihapus')));
+    _refreshClasses();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,30 +147,38 @@ class HomeScreen extends StatelessWidget {
                   ),
                   color: kPrimaryColor,
                 ),
-                child: Container(
-                  child: Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.all(8),
-                      children: <Widget>[
-                        Card(
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(8),
+                        itemCount: _classes.length,
+                        itemBuilder: (context, index) => Card(
                           color: Colors.white,
+                          margin:
+                              EdgeInsets.only(bottom: 16, left: 8, right: 8),
                           elevation: 6,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: ListTile(
-                            title: const Text(
-                              'XI RPL Basis Data',
-                              style: TextStyle(
+                            title: Text(
+                              _classes[index]['nama_kelas'],
+                              style: const TextStyle(
                                   color: kDarkColor,
                                   fontWeight: FontWeight.w700),
                             ),
-                            subtitle: Text('2019-2020'),
+                            subtitle: Text(
+                              _classes[index]['tahun_ajaran'],
+                            ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Text('24'),
-                                Icon(
+                              children: [
+                                Text(
+                                  _classes[index]['jumlah_siswa'].toString(),
+                                ),
+                                const Icon(
                                   Icons.people,
                                   color: kDarkColor,
                                 )
@@ -60,16 +186,13 @@ class HomeScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
+                      ),
               ),
             )
           ],
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed: () {},
+          onPressed: () => _showForm(null),
           backgroundColor: kDarkColor,
           child: Icon(Icons.add),
         ),

@@ -1,6 +1,6 @@
 # sqlite_implementation
 
-A new Flutter project.
+A new Flutter project implementing Sqlite.
 
 ## Getting Started
 

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sqlite_implementation/constants.dart';
 import 'package:sqlite_implementation/screens/home_screen.dart';
 
 void main() {

@@ -7,7 +7,7 @@ class SQLHelper {
       id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
       nama_kelas TEXT,
       tahun_ajaran TEXT,
-      jumlah_siswa INT,
+      jumlah_siswa INTEGER,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP)
       """);
   }

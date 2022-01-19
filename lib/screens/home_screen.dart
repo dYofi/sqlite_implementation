@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sqlite_implementation/constants.dart';
 import 'package:sqlite_implementation/sql_helper.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -42,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _classes.firstWhere((element) => element['id'] == id);
       _namaKelasController.text = existingKelas['nama_kelas'];
       _tahunAjaranController.text = existingKelas['tahun_ajaran'];
-      _jumlahSiswaController.text = existingKelas['jumlah_siswa'];
+      _jumlahSiswaController.text = existingKelas['jumlah_siswa'].toString();
     }
 
     showModalBottomSheet(
@@ -84,6 +85,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (id != null) {
                   await _updateClass(id);
                 }
+
+                // Close the bottom sheet
+                Navigator.of(context).pop();
               },
               child: Text(id == null ? 'Tambahkan' : 'Update'),
             ),
@@ -162,27 +166,62 @@ class _HomeScreenState extends State<HomeScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: ListTile(
-                            title: Text(
-                              _classes[index]['nama_kelas'],
-                              style: const TextStyle(
-                                  color: kDarkColor,
-                                  fontWeight: FontWeight.w700),
-                            ),
-                            subtitle: Text(
-                              _classes[index]['tahun_ajaran'],
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  _classes[index]['jumlah_siswa'].toString(),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: Slidable(
+                              startActionPane: ActionPane(
+                                motion: const ScrollMotion(),
+                                children: [
+                                  Container(
+                                    width: 70,
+                                    height: double.infinity,
+                                    color: Colors.red,
+                                    child: IconButton(
+                                      icon: const Icon(Icons.delete),
+                                      iconSize: 32,
+                                      color: Colors.white,
+                                      onPressed: () => _deleteItem(
+                                        _classes[index]['id'],
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 70,
+                                    height: double.infinity,
+                                    color: kDarkColor,
+                                    child: IconButton(
+                                        icon: const Icon(Icons.edit),
+                                        iconSize: 32,
+                                        color: Colors.white,
+                                        onPressed: () =>
+                                            _showForm(_classes[index]['id'])),
+                                  ),
+                                ],
+                              ),
+                              child: ListTile(
+                                title: Text(
+                                  _classes[index]['nama_kelas'],
+                                  style: const TextStyle(
+                                      color: kDarkColor,
+                                      fontWeight: FontWeight.w700),
                                 ),
-                                const Icon(
-                                  Icons.people,
-                                  color: kDarkColor,
-                                )
-                              ],
+                                subtitle: Text(
+                                  _classes[index]['tahun_ajaran'],
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      _classes[index]['jumlah_siswa']
+                                          .toString(),
+                                    ),
+                                    const Icon(
+                                      Icons.people,
+                                      color: kDarkColor,
+                                    )
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -192,7 +231,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed: () => _showForm(null),
+          onPressed: () {
+            _showForm(null);
+
+            // Clear the textfields
+            _namaKelasController.text = '';
+            _tahunAjaranController.text = '';
+            _jumlahSiswaController.text = '';
+          },
           backgroundColor: kDarkColor,
           child: Icon(Icons.add),
         ),

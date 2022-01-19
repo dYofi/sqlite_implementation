@@ -63,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             TextField(
               controller: _namaKelasController,
-              decoration: const InputDecoration(hintText: 'Nama kelas'),
+              decoration: const InputDecoration(hintText: 'Nama kelass'),
             ),
             const SizedBox(height: 10),
             TextField(
